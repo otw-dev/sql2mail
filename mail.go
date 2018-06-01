@@ -15,7 +15,8 @@ import (
 )
 
 var cfg *goconfig.ConfigFile
-var db *sql.DB
+
+// var db *sql.DB
 
 func main() {
 
@@ -34,13 +35,17 @@ func init() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	err = openDb()
-	if err != nil {
-		fmt.Println(err)
-	}
+	// err = openDb()
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
 }
 
-func openDb() (err error) {
+func openDb() (db *sql.DB, err error) {
+
+	// if db != nil || db.Stats() !=  {
+	// 	return
+	// }
 
 	conn := cfg.MustValue("db", "conn")
 	if conn == "" {
@@ -52,7 +57,10 @@ func openDb() (err error) {
 }
 
 func query(fn func([][]byte)) {
-	if db == nil {
+
+	db, err := openDb()
+	if err != nil {
+		fmt.Println(err)
 		return
 	}
 	defer db.Close()
@@ -116,7 +124,9 @@ func sendmail() {
 
 	attachment := attachment()
 
-	msg.SetHeader("Subject", cfg.MustValue("mail", "subject"))
+	subject := fmt.Sprintf("%s-%s", cfg.MustValue("mail", "subject"), time.Now().AddDate(0, 0, -1).Format("2006-01-02"))
+
+	msg.SetHeader("Subject", subject)
 
 	if attachment == "" {
 		msg.SetBody("text/html", "<color='red'>日志生成异常</color>")
